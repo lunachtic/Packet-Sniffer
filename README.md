@@ -1,4 +1,4 @@
-# Packet-Sniffer
+# Sniff-It : Packet-Sniffer
 Just a simple packet sniffer. Nothing too fancy. 
 My shout out to Silver Moon for his guide. He's got some pretty cool stuff going on over at Binary Tides. Check it out.
 
