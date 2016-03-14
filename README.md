@@ -94,6 +94,8 @@ So what is `"!BBHHHBBH4 s4 s."` ?
 
 (image for tcp format)
 
+If you wan't to read more stuff : [Python Forensics](http://www.amazon.com/Python-Forensics-workbench-inventing-technology/dp/0124186769) by Chet Hosmer is your best bet.
+
 ## Motivation
 I always wondered how Wireshark worked. This was my attempt to get under the hood and see for myself what exactly was going on.
 Networking can be so abstract until you peek into the RAW data and see what is up.
