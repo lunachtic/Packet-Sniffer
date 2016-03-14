@@ -79,7 +79,7 @@ The `unapack()` takes two parameters :
 1. string that defines the format of the data held in the buffer.
 2. the buffer that needs to be parsed.
 
-(image for ipv4format)
+![IPv4](https://github.com/shreyasgune/Packet-Sniffer/blob/master/ipv4format.PNG)
 
 Look at IPV4 packet header above.
 So what is `"!BBHHHBBH4 s4 s."` ?
@@ -90,9 +90,10 @@ So what is `"!BBHHHBBH4 s4 s."` ?
 `s => Python Type String (n bytes)`
 
  The first character represents the byte order of the data, for network packets, it's Big Endian.
-(image for data sheet)
+ 
+![Data Sheet](https://github.com/shreyasgune/Packet-Sniffer/blob/master/datasheet_unpack.PNG)
 
-(image for tcp format)
+![TCP Header](https://github.com/shreyasgune/Packet-Sniffer/blob/master/tcpheader.PNG)
 
 If you wan't to read more stuff : [Python Forensics](http://www.amazon.com/Python-Forensics-workbench-inventing-technology/dp/0124186769) by Chet Hosmer is your best bet.
 
