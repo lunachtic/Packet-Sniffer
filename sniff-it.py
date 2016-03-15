@@ -30,7 +30,7 @@ try:
 except socket.error,msg:
 	print 'Socket could not be created. Error Code : '+str(msg[0])+'Message '+msg[1] 
 	sys.exit
-
+count = 0
 print 'Getting a packet\n\n'
 #get a packet 
 while True:
@@ -39,6 +39,7 @@ while True:
 	#socket.recvfrom(buffersize,[flags]) gets the data from the socket. O/P - (string,address)
 
 	print 'Packet Received:'+str(packet)+'\n\n'
+	count= count+1
 	#packet string from tuple
 	packet=packet[0]
 	
@@ -113,5 +114,5 @@ while True:
 	print 'Data:'+data
 	print '------------------------------------\n\n'
 
-	print 'First Packet is done!\n'
+	print ' Packet %d is done!\n'%count 
 
