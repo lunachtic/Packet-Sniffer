@@ -86,12 +86,9 @@ def main():
 		elif eth.proto == 56710:
 			ipv6 = IPv6(eth.data)
 			print('IPv6 Packet:')
-			print('Version: {}, Traffic Class: {}, Flow Label: {},'.format(ipv6.version, ipv6.traffic_class,
-                                                                                   ipv6.flow_label))
-			print('Payload Length: {}, Next Header: {}, Hop Limit: {}'.format(ipv6.payload_length,
-                                                                                      ipv6.next_header, ipv6.hop_limit))
-			print('Source Address: {}, Destination Address: {}'.format(ipv6.source_address,
-                                                                               ipv6.destination_address))
+			print('Version: {}, Traffic Class: {}, Flow Label: {},'.format(ipv6.version, ipv6.traffic_class, ipv6.flow_label))
+			print('Payload Length: {}, Next Header: {}, Hop Limit: {}'.format(ipv6.payload_length, ipv6.next_header, ipv6.hop_limit))
+			print('Source Address: {}, Destination Address: {}'.format(ipv6.source_address, ipv6.destination_address))
 			next_header = ipv6.next_header
 			extension_header = ipv6.extension_header
 			identifyHeaderNPrint(next_header, extension_header)
