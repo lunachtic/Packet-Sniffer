@@ -4,12 +4,17 @@ import sys
 import textwrap
 
 # Get string of 6 characters as ethernet address into dash-separated hex string
-
-
 def eth_addr(a):
     b = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (a[0], a[1], a[2], a[3], a[4], a[5])
     return b
 
+def printMinimal(data):
+    wrapped_data = textwrap.wrap(str(data))
+        # Print a maximum of 5 lines
+    for line in wrapped_data[:5]:
+            print(line)
+    if len(wrapped_data) > 5:
+            print('...')  # Print ellipsis if there are more lines
 
 # Create an INET, STREAMing socket
 try:
@@ -27,13 +32,7 @@ while True:
     packet, addr = s.recvfrom(65565)
 
     print('Packet Received:')
-    wrapped_packet = textwrap.wrap(str(packet))
-
-    # Print a maximum of 5 lines
-    for line in wrapped_packet[:5]:
-        print(line)
-    if len(wrapped_packet) > 5:
-        print('...')  # Print ellipsis if there are more lines
+    printMinimal(packet)
 
     # ------------------- L2 Information -------------------------------------
     eth_length = 14
@@ -119,8 +118,7 @@ while True:
         print('------------------------------------------\n')
 
         # Check the Next Header field and handle specific headers accordingly
-        if next_header == 0:
-            # Hop-by-Hop Options Header
+        if next_header == 0: # Hop-by-Hop Options Header
             hbh_header = packet[eth_length + 40:eth_length + 48]
             hbh_next_header, hbh_header_length = struct.unpack(
                 '!BB', hbh_header)
@@ -130,8 +128,7 @@ while True:
             print('Header Length: ' + str((hbh_header_length + 1) * 8))
             print('----------------------------------------------\n')
 
-        elif next_header == 43:
-            # Routing Header
+        elif next_header == 43: # Routing Header
             routing_header = packet[eth_length + 40:eth_length + 48]
             routing_next_header, routing_header_length, routing_type, routing_segments = \
                 struct.unpack('!BBB', routing_header)
@@ -143,8 +140,7 @@ while True:
             print('Segments Left: ' + str(routing_segments))
             print('----------------------------------------------\n')
 
-        elif next_header == 44:
-            # Fragmentation Header
+        elif next_header == 44: # Fragmentation Header
             fragmentation_header = packet[eth_length + 40:eth_length + 48]
             fragmentation_next_header, fragmentation_reserved, fragmentation_fragment_offset, fragmentation_m_flag, \
                 fragmentation_identification = struct.unpack(
@@ -158,8 +154,7 @@ while True:
             print('Identification: ' + str(fragmentation_identification))
             print('----------------------------------------------\n')
 
-        elif next_header == 50:
-            # Encapsulating Security Payload Header
+        elif next_header == 50: # Encapsulating Security Payload Header
             esp_header = packet[eth_length + 40:eth_length + 48]
             esp_next_header, esp_payload_length, esp_spi = struct.unpack(
                 '!BBH', esp_header)
@@ -170,8 +165,7 @@ while True:
             print('SPI: ' + str(esp_spi))
             print('----------------------------------------------\n')
 
-        elif next_header == 51:
-            # Authentication Header
+        elif next_header == 51: # Authentication Header
             ah_header = packet[eth_length + 40:eth_length + 48]
             ah_next_header, ah_header_length, ah_reserved, ah_spi, ah_sequence, ah_auth_data = \
                 struct.unpack('!BBHLL', ah_header)
@@ -194,15 +188,11 @@ while True:
     if data_size > 0:
         print('##############DATA##################')
         print('Data:')
-        # Wrap the data into lines
-        wrapped_data = textwrap.wrap(str(data))
-        # Print a maximum of 5 lines
-        for line in wrapped_data[:5]:
-            print(line)
-        if len(wrapped_data) > 5:
-            print('...')  # Print ellipsis if there are more lines
+        printMinimal(data)
         print('------------------------------------\n\n')
 
     print('Packet {} is done!\n'.format(count))
     count += 1
-    # if count >= 10: break
+    if count >= 1000: break
+
+socket.close()
