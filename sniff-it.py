@@ -1,186 +1,208 @@
-#Packet sniffer in Python
-#Linux based implementation
-
-'''
 import socket
+import struct
+import sys
+import textwrap
 
-#create an INET raw socket
-s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-
-#receive a packet
-while True:
-	print s.recvfrom(65565)
-
-'''
-import socket, sys, textwrap
-from struct import *
-
-#create an INET, STREAMing socket
-def main():
-	try:
-		#s=socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.ntohs(0x0003))
-		s=socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-		#AF_INET is the family of sockets created - TCP or UDP
-		#Socket type is SOCK_RAW instead of SOCK_STREAM or SOCK_DGRAM
-		#Socket protocol specified is IP-PROTO_<TCP/UDP/ICMP>
-	except socket.error as msg:
-		print ('Socket could not be created. Error Code : '+str(msg[0])+'Message '+msg[1] )
-		sys.exit
-		count = 0
-		print ('Getting a packet\n\n')
-	filter = int(input('Select a filter.\nIPv4, type 1;\nIPv6, type 2;\n\nNúmero escolhido: '))
-	#get a packet 
-	while True:
-		packet = s.recvfrom(65565) #keep in mind that this port binding won't work in Windows
-				   #Windows uses a Winsock API hook or Winpcap driver for sockets
-		#socket.recvfrom(buffersize,[flags]) gets the data from the socket. O/P - (string,address)
-
-		print ('Packet Received:'+str(packet)+'\n\n')
-		count= count+1
-		#packet string from tuple
-		
-		#-------------------L2 Information-------------------------------------
-		eth = Ethernet(packet)
-		if(filter==1):
-			if eth.proto != 8:
-				continue
-		elif filter == 2:
-			if eth.proto != 56710:
-				continue
-
-		print ('\nEthernet Frame:')
-		print ('Destination MAC: {}, Source MAC: {}, Protocol: {}'.format(eth.dest_mac, eth.src_mac, eth.proto))
-
-	
-  	    #-------------------IP HEADER EXTRACTION--------------------------------
-		# IPv4
-		if eth.proto == 8:
-			ipv4 = IPv4(eth.data)
-			print('IPv4 Packet:')
-			print('Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
-			print('Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
-
-        	# ICMP
-			if ipv4.proto == 1:
-				icmp = ICMP(ipv4.data)
-				print('ICMP Packet:')
-				print('Type: {}, Code: {}, Checksum: {},'.format(icmp.type, icmp.code, icmp.checksum))
-				print('ICMP Data:')
-				print(format_multi_line(icmp.data))
-
-			# TCP
-			elif ipv4.proto == 6:
-				tcp = TCP(ipv4.data)
-				printTCP(tcp)
-
-			# UDP
-			elif ipv4.proto == 17:
-				udp = UDP(ipv4.data)
-				printUDP(udp)
-
-			# Other IPv4
-			else:
-				print('Other IPv4 Data:')
-				print(format_multi_line(ipv4.data))
-
-		elif eth.proto == 56710:
-			ipv6 = IPv6(eth.data)
-			print('IPv6 Packet:')
-			print('Version: {}, Traffic Class: {}, Flow Label: {},'.format(ipv6.version, ipv6.traffic_class, ipv6.flow_label))
-			print('Payload Length: {}, Next Header: {}, Hop Limit: {}'.format(ipv6.payload_length, ipv6.next_header, ipv6.hop_limit))
-			print('Source Address: {}, Destination Address: {}'.format(ipv6.source_address, ipv6.destination_address))
-			next_header = ipv6.next_header
-			extension_header = ipv6.extension_header
-			identifyHeaderNPrint(next_header, extension_header)
-		else:
-			print('Ethernet Data:')
-			print(format_multi_line(eth.data))
-                        
-def Ethernet(self, raw_data):
-
-        dest, src, prototype = struct.unpack('! 6s 6s H', raw_data[:14])
-        self.dest_mac = get_mac_addr(dest)
-        self.src_mac = get_mac_addr(src)
-        self.proto = socket.htons(prototype)
-        self.data = raw_data[14:]
-
-def AuthenticationHeader(self, raw_data):
-        self.next_header = raw_data[0:1]
-        self.length = raw_data[1:2]
-        self.reserved = raw_data[2:4]
-        self.spi = raw_data[4:8]
-        self.sequence = raw_data[8:12]
-        self.auth_data = raw_data[12:16]
-
-def HopByHop(self, raw_data):
-        self.next_header, self.heLength = struct.unpack('! B B', raw_data[:2])
-        self.data = raw_data[2:]
-
-def DestinationOptions(self, raw_data):
-        self.next_header, self.heLength = struct.unpack('! B B', raw_data[:2])
-        self.data = raw_data[2:]
-
-def FragmentHeader(self, raw_data):
-        self.next_header = raw_data[0:1] #8 bits
-        self.reserved = raw_data[1:2] #8 bits
-        self.fragment_offset = raw_data[2:4] << 13 #13 bits
-        self.reserved2 = (raw_data[2:4] >> 3) << 1 #2 bits
-        self.m = raw_data[2:4] >> 1 #1 bit
-        self.id_number = raw_data[4:] #32 bits
-
-def EncapsulationSecurityPayload(self, raw_data):
-        self.spi = raw_data[0:4]
-        self.sequence = raw_data[4:8]
-        self.payload_data = raw_data[8:13]
-        self.padding = raw_data[13:18]
-        self.pad_size = raw_data[18:19]
-        self.next_header = raw_data[19:20]
-        self.auth_data = raw_data[20:24]
-
-def DestinationOptions(self, raw_data):
-        self.next_header, self.heLength = struct.unpack('! B B', raw_data[:2])
-        self.data = raw_data[2:]
-
-def RoutingHeader(self, raw_data):
-        self.next_header, self.heLength, self.routing_type, self.segments_left = struct.unpack('! B B B B', raw_data[:4]) #8 bits cada
-        self.data = None #variável
-        self.reserved = None #32 bits
-        self.addresses = None #128 bits cada
-
-        if self.routing_type == 0:
-            self.reserved = raw_data[4:8]
-            self.addresses = raw_data[8:]
-        else:
-            self.data = raw_data[4:]
-
-def get_mac_addr(mac_raw):
-    # need python 3
-    byte_str = map('{:02x}'.format, mac_raw)
-    mac_addr = ':'.join(byte_str).upper()
-    return mac_addr
+# Get string of 6 characters as ethernet address into dash-separated hex string
 
 
-# Return an IPv6 address
-def get_ipv6_address(raw_data):
-    address = ":".join(
-        map('{:04x}'.format, struct.unpack('! H H H H H H H H', raw_data)))
-    return address.replace(":0000:","::" ).replace(":::", "::").replace(":::", "::")
-
-# Formats multi-line data
-def format_multi_line(prefix, string, size=80):
-    size -= len(prefix)
-    if isinstance(string, bytes):
-        string = ''.join(r'\x{:02x}'.format(byte) for byte in string)
-        if size % 2:
-            size -= 1
-    return '\n'.join([prefix + line for line in textwrap.wrap(string, size)])
+def eth_addr(a):
+    b = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (a[0], a[1], a[2], a[3], a[4], a[5])
+    return b
 
 
-def byteDataToString(raw_data):
-    return " ".join(map('{:02x}'.format, raw_data))
-
-
+# Create an INET, STREAMing socket
 try:
-    main()
-except Exception as e:
-    print('Error Code:\n' + str(e))
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+except socket.error as msg:
+    print('Socket could not be created. Error Code: ' +
+          str(msg[0]) + ' Message: ' + msg[1])
+    sys.exit()
+
+count = 0
+print('Getting a packet\n')
+
+# Get a packet
+while True:
+    packet, addr = s.recvfrom(65565)
+
+    print('Packet Received:')
+    wrapped_packet = textwrap.wrap(str(packet))
+
+    # Print a maximum of 5 lines
+    for line in wrapped_packet[:5]:
+        print(line)
+    if len(wrapped_packet) > 5:
+        print('...')  # Print ellipsis if there are more lines
+
+    # ------------------- L2 Information -------------------------------------
+    eth_length = 14
+    eth_header = packet[:eth_length]
+    eth_unpack = struct.unpack('!6s6sH', eth_header)
+    eth_protocol = socket.ntohs(eth_unpack[2])
+    print('############### Layer 2 Information ############')
+    print('Destination MAC: ' + eth_addr(packet[0:6]))
+    print('Source MAC: ' + eth_addr(packet[6:12]))
+    print('Protocol: ' + str(eth_protocol))
+    print('-----------------------------------------------\n')
+
+    # ------------------- IP HEADER EXTRACTION --------------------------------
+    if eth_protocol == 8:  # IPv4
+        ip_header = packet[eth_length:eth_length + 20]
+        iph = struct.unpack('!BBHHHBBH4s4s', ip_header)
+
+        version_ihl = iph[0]
+        version = version_ihl >> 4
+        ihl = version_ihl & 0xF
+
+        iph_length = ihl * 4
+
+        ttl = iph[5]
+        protocol = iph[6]
+        source_addr = socket.inet_ntoa(iph[8])
+        dest_addr = socket.inet_ntoa(iph[9])
+
+        print('########## IPv4 Header Info ##############')
+        print('Version: ' + str(version))
+        print('IP Header Length: ' + str(ihl))
+        print('TTL: ' + str(ttl))
+        print('Protocol: ' + str(protocol))
+        print('Source Address: ' + str(source_addr))
+        print('Destination Address: ' + str(dest_addr))
+        print('------------------------------------------\n')
+
+        # ---------------- TCP HEADER EXTRACTION --------------------------------
+        if protocol == 6:  # TCP
+            tcp_header = packet[eth_length +
+                                iph_length:eth_length + iph_length + 20]
+            tcph = struct.unpack('!HHLLBBHHH', tcp_header)
+
+            source_port = tcph[0]
+            dest_port = tcph[1]
+            sequence = tcph[2]
+            ack = tcph[3]
+            resrve = tcph[4]
+            tcph_length = resrve >> 4
+
+            print('########### TCP Header Info ##############')
+            print('Source Port: ' + str(source_port))
+            print('Destination Port: ' + str(dest_port))
+            print('Sequence Number: ' + str(sequence))
+            print('Acknowledgement: ' + str(ack))
+            print('TCP Header Length: ' + str(tcph_length))
+            print('------------------------------------------\n')
+        # Add support for other protocols as needed
+
+    elif eth_protocol == 56710:  # IPv6
+        ip_header = packet[eth_length:eth_length + 40]
+        iph = struct.unpack('!IHBB16s16s', ip_header)
+
+        version = (iph[0] >> 28) & 0x0F
+        traffic_class = (iph[0] >> 20) & 0xFF
+        flow_label = iph[0] & 0xFFFFF
+
+        payload_length = iph[1]
+        next_header = iph[2]
+        hop_limit = iph[3]
+        source_addr = socket.inet_ntop(socket.AF_INET6, iph[4])
+        dest_addr = socket.inet_ntop(socket.AF_INET6, iph[5])
+
+        print('########## IPv6 Header Info ##############')
+        print('Version: ' + str(version))
+        print('Traffic Class: ' + str(traffic_class))
+        print('Flow Label: ' + str(flow_label))
+        print('Payload Length: ' + str(payload_length))
+        print('Next Header: ' + str(next_header))
+        print('Hop Limit: ' + str(hop_limit))
+        print('Source Address: ' + str(source_addr))
+        print('Destination Address: ' + str(dest_addr))
+        print('------------------------------------------\n')
+
+        # Check the Next Header field and handle specific headers accordingly
+        if next_header == 0:
+            # Hop-by-Hop Options Header
+            hbh_header = packet[eth_length + 40:eth_length + 48]
+            hbh_next_header, hbh_header_length = struct.unpack(
+                '!BB', hbh_header)
+
+            print('######## Hop-by-Hop Options Header Info ########')
+            print('Next Header: ' + str(hbh_next_header))
+            print('Header Length: ' + str((hbh_header_length + 1) * 8))
+            print('----------------------------------------------\n')
+
+        elif next_header == 43:
+            # Routing Header
+            routing_header = packet[eth_length + 40:eth_length + 48]
+            routing_next_header, routing_header_length, routing_type, routing_segments = \
+                struct.unpack('!BBB', routing_header)
+
+            print('############## Routing Header Info #############')
+            print('Next Header: ' + str(routing_next_header))
+            print('Header Length: ' + str((routing_header_length + 1) * 8))
+            print('Routing Type: ' + str(routing_type))
+            print('Segments Left: ' + str(routing_segments))
+            print('----------------------------------------------\n')
+
+        elif next_header == 44:
+            # Fragmentation Header
+            fragmentation_header = packet[eth_length + 40:eth_length + 48]
+            fragmentation_next_header, fragmentation_reserved, fragmentation_fragment_offset, fragmentation_m_flag, \
+                fragmentation_identification = struct.unpack(
+                    '!B3sHBH', fragmentation_header)
+
+            print('############ Fragmentation Header Info ##########')
+            print('Next Header: ' + str(fragmentation_next_header))
+            print('Reserved: ' + str(fragmentation_reserved))
+            print('Fragment Offset: ' + str(fragmentation_fragment_offset))
+            print('M Flag: ' + str(fragmentation_m_flag))
+            print('Identification: ' + str(fragmentation_identification))
+            print('----------------------------------------------\n')
+
+        elif next_header == 50:
+            # Encapsulating Security Payload Header
+            esp_header = packet[eth_length + 40:eth_length + 48]
+            esp_next_header, esp_payload_length, esp_spi = struct.unpack(
+                '!BBH', esp_header)
+
+            print('####### Encapsulating Security Payload Info ######')
+            print('Next Header: ' + str(esp_next_header))
+            print('Payload Length: ' + str(esp_payload_length))
+            print('SPI: ' + str(esp_spi))
+            print('----------------------------------------------\n')
+
+        elif next_header == 51:
+            # Authentication Header
+            ah_header = packet[eth_length + 40:eth_length + 48]
+            ah_next_header, ah_header_length, ah_reserved, ah_spi, ah_sequence, ah_auth_data = \
+                struct.unpack('!BBHLL', ah_header)
+
+            print('######## Authentication Header Info ###########')
+            print('Next Header: ' + str(ah_next_header))
+            print('Header Length: ' + str((ah_header_length + 2) * 4))
+            print('Reserved: ' + str(ah_reserved))
+            print('SPI: ' + str(ah_spi))
+            print('Sequence Number: ' + str(ah_sequence))
+            print('Auth Data: ' + str(ah_auth_data))
+            print('----------------------------------------------\n')
+
+    # ------------------------ Get the DATA -----------------------------------
+    h_size = eth_length + tcph_length * 4
+    data_size = len(packet) - h_size
+
+    # Get the data
+    data = packet[h_size:]
+    if data_size > 0:
+        print('##############DATA##################')
+        print('Data:')
+        # Wrap the data into lines
+        wrapped_data = textwrap.wrap(str(data))
+        # Print a maximum of 5 lines
+        for line in wrapped_data[:5]:
+            print(line)
+        if len(wrapped_data) > 5:
+            print('...')  # Print ellipsis if there are more lines
+        print('------------------------------------\n\n')
+
+    print('Packet {} is done!\n'.format(count))
+    count += 1
+    # if count >= 10: break
