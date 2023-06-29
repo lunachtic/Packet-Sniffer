@@ -195,4 +195,4 @@ while True:
     count += 1
     if count >= 1000: break
 
-socket.close()
+s.close()
